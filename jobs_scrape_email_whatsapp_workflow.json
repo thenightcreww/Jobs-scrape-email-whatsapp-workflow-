@@ -1,0 +1,399 @@
+{
+  "name": "🕷️ Jobs Scraper → Email + WhatsApp Outreach (Indeed + Naukri + LinkedIn)",
+  "nodes": [
+
+    {
+      "parameters": {},
+      "id": "node-trigger-001",
+      "name": "▶ Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-8400, 400]
+    },
+
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 12 }]
+        }
+      },
+      "id": "node-schedule-001",
+      "name": "⏰ Schedule Trigger (Every 12h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-8400, 560]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// CONFIG NODE — Edit all settings here\n// ============================================================\nconst config = {\n  // ── Search Keywords ───────────────────────────────────────\n  keywords:   'AI Automation Engineer',   // ← your job title\n  location:   'India',                    // ← city / country\n\n  // ── Platforms to scrape ──────────────────────────────────\n  scrapeIndeed:   true,\n  scrapeNaukri:   true,\n  scrapeLinkedIn: true,\n\n  // ── Pagination ───────────────────────────────────────────\n  linkedInPages: 3,    // × 25 jobs each\n  indeedPages:   3,    // × 15 jobs each\n  naukriPages:   3,    // × 20 jobs each\n\n  // ── Rate limiting ────────────────────────────────────────\n  delayMs: 1500,\n\n  // ── Your Identity ────────────────────────────────────────\n  senderName:    'Manpreet Singh',\n  senderEmail:   'manpreet@gmail.com',\n  senderPhone:   '919876543210',   // WhatsApp number with country code\n  resumeUrl:     'https://yoursite.com/resume.pdf',\n\n  // ── Message Templates ─────────────────────────────────────\n  emailSubject:  'Application for {title} at {company}',\n  emailBody: `Hi {hiringManager},\n\nI came across the {title} opening at {company} and I'm very excited about this opportunity.\n\nWith hands-on experience in AI automation, workflow design, and full-stack development, I believe I can add immediate value to your team.\n\nPlease find my resume attached: {resumeUrl}\n\nI'd love to connect at your convenience.\n\nBest regards,\n{senderName}\n{senderEmail}`,\n\n  whatsappMsg: `Hello! 👋\n\nI saw the *{title}* opening at *{company}*.\n\nI'm {senderName}, an AI Automation specialist with proven experience in building scalable systems.\n\n📎 Resume: {resumeUrl}\n\nWould love to discuss this opportunity. Please let me know a convenient time!\n\nThank you 🙏`,\n\n  // ── Filters ───────────────────────────────────────────────\n  maxContactsPerRun: 30,\n  onlyWithPhone:     false,   // true = WhatsApp-only contacts\n  onlyWithEmail:     false,   // true = email-only contacts\n  blacklistDomains:  ['noreply', 'example.com', 'linkedin.com', 'naukri.com', 'indeed.com']\n};\n\nreturn [{ json: config }];"
+      },
+      "id": "node-config-001",
+      "name": "⚙️ Config — Keywords, Templates, Limits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-8160, 400]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// GENERATE SCRAPE TASKS for all 3 platforms\n// ============================================================\nconst cfg = $input.first().json;\nconst tasks = [];\n\n// ── LinkedIn tasks ────────────────────────────────────────\nif (cfg.scrapeLinkedIn) {\n  for (let i = 0; i < cfg.linkedInPages; i++) {\n    tasks.push({ json: { ...cfg, platform: 'linkedin', pageIndex: i, start: i * 25 } });\n  }\n}\n\n// ── Indeed tasks ─────────────────────────────────────────\nif (cfg.scrapeIndeed) {\n  for (let i = 0; i < cfg.indeedPages; i++) {\n    tasks.push({ json: { ...cfg, platform: 'indeed', pageIndex: i, start: i * 15 } });\n  }\n}\n\n// ── Naukri tasks ─────────────────────────────────────────\nif (cfg.scrapeNaukri) {\n  for (let i = 0; i < cfg.naukriPages; i++) {\n    tasks.push({ json: { ...cfg, platform: 'naukri', pageIndex: i, start: i * 20 } });\n  }\n}\n\nconsole.log(`Generated ${tasks.length} scrape tasks across platforms`);\nreturn tasks;"
+      },
+      "id": "node-taskgen-001",
+      "name": "📋 Generate Scrape Tasks (All Platforms)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-7920, 400]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// ROUTE: Build URL per platform\n// ============================================================\nconst item = $input.first().json;\nconst kw   = encodeURIComponent(item.keywords);\nconst loc  = encodeURIComponent(item.location);\nlet url = '';\n\nswitch (item.platform) {\n  case 'linkedin':\n    url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${kw}&location=${loc}&start=${item.start}&f_TPR=r86400&sortBy=DD`;\n    break;\n\n  case 'indeed':\n    url = `https://www.indeed.com/jobs?q=${kw}&l=${loc}&start=${item.start}&sort=date&fromage=7`;\n    break;\n\n  case 'naukri':\n    // Naukri search URL pattern\n    const kwSlug = item.keywords.toLowerCase().replace(/\\s+/g, '-');\n    const locSlug = item.location.toLowerCase().replace(/\\s+/g, '-');\n    url = `https://www.naukri.com/${kwSlug}-jobs-in-${locSlug}-${item.start}`;\n    break;\n}\n\nreturn [{ json: { ...item, scrapeUrl: url } }];"
+      },
+      "id": "node-urlbuild-001",
+      "name": "🔗 Build Scrape URL Per Platform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-7680, 400]
+    },
+
+    {
+      "parameters": {
+        "url": "={{ $json.scrapeUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent",      "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" },
+            { "name": "Accept",          "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" },
+            { "name": "Accept-Language", "value": "en-IN,en-US;q=0.9,en;q=0.8" },
+            { "name": "Accept-Encoding", "value": "gzip, deflate, br" },
+            { "name": "Connection",      "value": "keep-alive" },
+            { "name": "Cache-Control",   "value": "no-cache" },
+            { "name": "Referer",         "value": "https://www.google.com/" },
+            { "name": "sec-ch-ua",       "value": "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\"" },
+            { "name": "sec-ch-ua-platform", "value": "\"Windows\"" },
+            { "name": "sec-fetch-dest",  "value": "document" },
+            { "name": "sec-fetch-mode",  "value": "navigate" },
+            { "name": "sec-fetch-site",  "value": "none" },
+            { "name": "Upgrade-Insecure-Requests", "value": "1" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "text" } },
+          "timeout": 35000,
+          "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 5 } }
+        }
+      },
+      "id": "node-http-scrape-001",
+      "name": "🌐 HTTP — Scrape Job Listing Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-7440, 400],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2500,
+      "continueOnFail": true
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// PARSE JOBS FROM HTML — LinkedIn + Indeed + Naukri\n// Extracts: job_id, title, company, location, job_url\n// ============================================================\nconst results = [];\n\nfor (const item of $input.all()) {\n  const html     = item.json.data || item.json.body || '';\n  const meta     = item.json;\n  const platform = meta.platform;\n\n  if (!html || html.length < 200) continue;\n  if (html.includes('authwall') || html.includes('CAPTCHA') || html.includes('captcha')) {\n    console.log(`[${platform}] Blocked page ${meta.pageIndex}`);\n    continue;\n  }\n\n  const jobs = [];\n\n  // ─────────────────────────────────────────────────────────\n  // LINKEDIN PARSING\n  // ─────────────────────────────────────────────────────────\n  if (platform === 'linkedin') {\n    const idMatches      = [...html.matchAll(/data-entity-urn=\"urn:li:jobPosting:(\\d+)\"/g)];\n    const titleMatches   = [...html.matchAll(/<span[^>]*class=\"[^\"]*title[^\"]*\"[^>]*>\\s*([^<]{3,120})\\s*<\\/span>/gi)];\n    const companyMatches = [...html.matchAll(/<h4[^>]*class=\"[^\"]*company[^\"]*\"[^>]*>[\\s\\S]*?<a[^>]*>([^<]+)<\\/a>/gi)];\n    const locationMatches= [...html.matchAll(/<span[^>]*class=\"[^\"]*location[^\"]*\"[^>]*>([^<]{2,80})<\\/span>/gi)];\n    const jobIds         = [...new Set(idMatches.map(m => m[1]))];\n\n    for (let i = 0; i < jobIds.length; i++) {\n      jobs.push({\n        job_id:    jobIds[i],\n        title:     titleMatches[i]?.[1]?.trim()   || 'Unknown',\n        company:   companyMatches[i]?.[1]?.trim() || 'Unknown',\n        location:  locationMatches[i]?.[1]?.trim()|| meta.location,\n        job_url:   `https://www.linkedin.com/jobs/view/${jobIds[i]}`,\n        platform:  'linkedin'\n      });\n    }\n  }\n\n  // ─────────────────────────────────────────────────────────\n  // INDEED PARSING\n  // ─────────────────────────────────────────────────────────\n  else if (platform === 'indeed') {\n    // Indeed job cards use data-jk attribute for job key\n    const jkMatches      = [...html.matchAll(/data-jk=\"([a-z0-9]+)\"/gi)];\n    const titleMatches   = [...html.matchAll(/class=\"[^\"]*jobTitle[^\"]*\"[^>]*>[^<]*<(?:span|a)[^>]*>([^<]{3,120})<\\/(?:span|a)>/gi)];\n    const companyMatches = [...html.matchAll(/class=\"[^\"]*companyName[^\"]*\"[^>]*>([^<]{2,80})<\\/(?:span|a|div)>/gi)];\n    const locationMatches= [...html.matchAll(/class=\"[^\"]*companyLocation[^\"]*\"[^>]*>([^<]{2,80})<\\/(?:div|span)>/gi)];\n    const jobKeys        = [...new Set(jkMatches.map(m => m[1]))];\n\n    for (let i = 0; i < jobKeys.length; i++) {\n      jobs.push({\n        job_id:    jobKeys[i],\n        title:     titleMatches[i]?.[1]?.trim()   || 'Unknown',\n        company:   companyMatches[i]?.[1]?.trim() || 'Unknown',\n        location:  locationMatches[i]?.[1]?.trim()|| meta.location,\n        job_url:   `https://www.indeed.com/viewjob?jk=${jobKeys[i]}`,\n        platform:  'indeed'\n      });\n    }\n  }\n\n  // ─────────────────────────────────────────────────────────\n  // NAUKRI PARSING\n  // ─────────────────────────────────────────────────────────\n  else if (platform === 'naukri') {\n    // Naukri uses JSON-LD and data attributes\n    const jobMatches     = [...html.matchAll(/\"jobId\"\\s*:\\s*\"([^\"]+)\"/g)];\n    const titleMatches   = [...html.matchAll(/\"title\"\\s*:\\s*\"([^\"]{3,120})\"/g)];\n    const companyMatches = [...html.matchAll(/\"companyName\"\\s*:\\s*\"([^\"]{2,80})\"/g)];\n    const locationMatches= [...html.matchAll(/\"cityName\"\\s*:\\s*\"([^\"]{2,50})\"/g)];\n    const slugMatches    = [...html.matchAll(/href=\"(\\/job-listings[^\"]+)\"/gi)];\n\n    const jobIds = [...new Set(jobMatches.map(m => m[1]))];\n\n    for (let i = 0; i < jobIds.length; i++) {\n      const slug = slugMatches[i]?.[1] || '';\n      jobs.push({\n        job_id:    jobIds[i],\n        title:     titleMatches[i]?.[1]?.trim()   || 'Unknown',\n        company:   companyMatches[i]?.[1]?.trim() || 'Unknown',\n        location:  locationMatches[i]?.[1]?.trim()|| meta.location,\n        job_url:   slug ? `https://www.naukri.com${slug}` : `https://www.naukri.com/job-listings-${jobIds[i]}`,\n        platform:  'naukri'\n      });\n    }\n  }\n\n  // Push with metadata\n  for (const job of jobs) {\n    results.push({ json: {\n      ...job,\n      keywords:        meta.keywords,\n      resumeUrl:       meta.resumeUrl,\n      senderName:      meta.senderName,\n      senderEmail:     meta.senderEmail,\n      senderPhone:     meta.senderPhone,\n      emailSubject:    meta.emailSubject,\n      emailBody:       meta.emailBody,\n      whatsappMsg:     meta.whatsappMsg,\n      blacklistDomains:meta.blacklistDomains,\n      maxContacts:     meta.maxContactsPerRun,\n      onlyWithPhone:   meta.onlyWithPhone,\n      onlyWithEmail:   meta.onlyWithEmail,\n      scrapedAt:       new Date().toISOString()\n    }});\n  }\n}\n\nconsole.log(`Total jobs parsed: ${results.length}`);\nreturn results.length > 0 ? results : [{ json: { error: 'No jobs parsed', hint: 'Sites may be blocking — check headers' } }];"
+      },
+      "id": "node-parse-001",
+      "name": "📋 Parse Job Cards (LinkedIn + Indeed + Naukri)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-7200, 400]
+    },
+
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "node-batch-001",
+      "name": "⫿ Split In Batches (5 jobs)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [-6960, 400]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// Rate limit delay between batches\nconst delay = ms => new Promise(r => setTimeout(r, ms));\nawait delay(1500);\nreturn $input.all();"
+      },
+      "id": "node-delay-001",
+      "name": "⏱ Rate Limit Delay (1.5s)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-6720, 400]
+    },
+
+    {
+      "parameters": {
+        "url": "={{ $json.job_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent",      "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" },
+            { "name": "Accept",          "value": "text/html,application/xhtml+xml,*/*;q=0.8" },
+            { "name": "Accept-Language", "value": "en-IN,en-US;q=0.9,en;q=0.8" },
+            { "name": "Referer",         "value": "https://www.google.com/" },
+            { "name": "Connection",      "value": "keep-alive" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "text" } },
+          "timeout": 30000
+        }
+      },
+      "id": "node-http-detail-001",
+      "name": "🔎 HTTP — Fetch Full Job Detail Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-6480, 400],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "continueOnFail": true
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// EXTRACT EMAILS & PHONE NUMBERS FROM JOB DETAIL PAGE\n// Works across LinkedIn, Indeed, Naukri HTML structures\n// ============================================================\n\nconst EMAIL_REGEX   = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,7}/g;\nconst PHONE_REGEX   = /(?:\\+91[\\-\\s]?|0)?[6-9]\\d{9}|(?:\\+1[\\-\\s]?)?\\(?\\d{3}\\)?[\\-\\s.]?\\d{3}[\\-\\s.]?\\d{4}|(?:\\+\\d{1,3}[\\-\\s]?)?\\d{8,15}/g;\nconst PHONE_CLEAN   = /[^\\d+]/g;\n\nconst BLOCKED_EMAIL_DOMAINS = [\n  'linkedin.com','licdn.com','indeed.com','naukri.com','monster.com',\n  'shine.com','foundit.in','example.com','sentry.io','schema.org',\n  'w3.org','google.com','facebook.com','twitter.com','apple.com',\n  'microsoft.com','amazon.com','cloudflare.com','2mdn.net','doubleclick.net'\n];\n\nconst BLOCKED_EMAIL_PREFIXES = [\n  'noreply','no-reply','donotreply','mailer','postmaster',\n  'bounce','unsubscribe','system','notification','alert'\n];\n\nconst results = [];\n\nfor (const item of $input.all()) {\n  const html = item.json.data || item.json.body || '';\n  const meta = item.json;\n\n  if (!html || html.length < 100) {\n    results.push({ json: { ...meta, emails: [], phones: [], contacts: [], status: 'fetch_failed' } });\n    continue;\n  }\n\n  // ── Decode HTML entities ─────────────────────────────────\n  const text = html\n    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')\n    .replace(/&nbsp;/g,' ').replace(/&#64;/g,'@').replace(/&#46;/g,'.')\n    .replace(/<[^>]+>/g,' ').replace(/\\s+/g,' ');\n\n  // ── Extract raw emails ───────────────────────────────────\n  const rawEmails = [...new Set(text.match(EMAIL_REGEX) || [])];\n  const blacklistDomains = meta.blacklistDomains || [];\n\n  const filteredEmails = rawEmails.filter(email => {\n    const dom = (email.split('@')[1] || '').toLowerCase();\n    const pfx = (email.split('@')[0] || '').toLowerCase();\n    return !BLOCKED_EMAIL_DOMAINS.some(d => dom.includes(d)) &&\n           !blacklistDomains.some(d => dom.includes(d)) &&\n           !BLOCKED_EMAIL_PREFIXES.some(p => pfx.startsWith(p)) &&\n           !pfx.includes('example') && dom.includes('.');\n  });\n\n  // ── Score emails ─────────────────────────────────────────\n  const FREE_DOMAINS = ['gmail.com','yahoo.com','hotmail.com','outlook.com','yahoo.in','rediffmail.com'];\n  const scoredEmails = filteredEmails.map(email => {\n    const dom = (email.split('@')[1] || '').toLowerCase();\n    const pfx = (email.split('@')[0] || '').toLowerCase();\n    let score = 50;\n    if (!FREE_DOMAINS.includes(dom)) score += 20;\n    if (/^[a-z]+[._][a-z]+$/.test(pfx)) score += 20;\n    if (text.includes(email)) score += 10;\n    if (['hr','recruit','hiring','careers','talent','jobs','apply','team'].some(k => pfx.includes(k))) score += 15;\n    return { email, domain: dom, score: Math.min(score,100), type: FREE_DOMAINS.includes(dom) ? 'personal' : 'business' };\n  }).sort((a,b) => b.score - a.score);\n\n  // ── Extract phone numbers ────────────────────────────────\n  const rawPhones = text.match(PHONE_REGEX) || [];\n  const cleanedPhones = [...new Set(\n    rawPhones\n      .map(p => p.replace(PHONE_CLEAN,''))\n      .filter(p => p.length >= 10 && p.length <= 15)\n      .filter(p => !/^(\\d)\\1{9,}$/.test(p)) // remove repeating digits\n      .filter(p => !p.startsWith('000') && !p.startsWith('111'))\n  )];\n\n  // Format Indian phones for WhatsApp\n  const whatsappPhones = cleanedPhones.map(p => {\n    if (p.startsWith('+')) return p.replace('+','');\n    if (p.startsWith('91') && p.length === 12) return p;\n    if (p.length === 10 && /^[6-9]/.test(p)) return `91${p}`;\n    return p;\n  }).filter(p => p.length >= 10);\n\n  // ── Extract hiring manager name (bonus) ──────────────────\n  let hiringManager = 'Hiring Manager';\n  const hmMatch = html.match(/(?:Contact|Recruiter|Posted by|HR)[:\\s]*<[^>]*>([A-Z][a-z]+ [A-Z][a-z]+)/)\n               || html.match(/\"hiringOrganization\"[^}]*\"name\"\\s*:\\s*\"([^\"]+)\"/);\n  if (hmMatch) hiringManager = hmMatch[1];\n\n  // ── Build personalized messages ──────────────────────────\n  const fillTemplate = (tpl) => tpl\n    .replace(/{title}/g,         meta.title || 'the open position')\n    .replace(/{company}/g,       meta.company || 'your company')\n    .replace(/{hiringManager}/g, hiringManager)\n    .replace(/{resumeUrl}/g,     meta.resumeUrl || '')\n    .replace(/{senderName}/g,    meta.senderName || '')\n    .replace(/{senderEmail}/g,   meta.senderEmail || '');\n\n  const personalizedEmail    = fillTemplate(meta.emailBody    || '');\n  const personalizedSubject  = fillTemplate(meta.emailSubject || 'Job Application');\n  const personalizedWhatsApp = fillTemplate(meta.whatsappMsg  || '');\n\n  // ── Build unified contact list ───────────────────────────\n  const contacts = [];\n  for (const e of scoredEmails)   contacts.push({ type: 'email', value: e.email, score: e.score, emailType: e.type });\n  for (const p of whatsappPhones) contacts.push({ type: 'phone', value: p,       score: 70 });\n\n  results.push({ json: {\n    job_id:              meta.job_id,\n    title:               meta.title,\n    company:             meta.company,\n    location:            meta.location,\n    job_url:             meta.job_url,\n    platform:            meta.platform,\n    emails:              scoredEmails.map(e => e.email),\n    emails_scored:       scoredEmails,\n    best_email:          scoredEmails[0]?.email || null,\n    phones:              cleanedPhones,\n    whatsapp_phones:     whatsappPhones,\n    best_phone:          whatsappPhones[0] || null,\n    contacts,\n    has_email:           scoredEmails.length > 0,\n    has_phone:           whatsappPhones.length > 0,\n    has_contact:         contacts.length > 0,\n    hiring_manager:      hiringManager,\n    personalized_subject:personalizedSubject,\n    personalized_email:  personalizedEmail,\n    personalized_whatsapp: personalizedWhatsApp,\n    sender_email:        meta.senderEmail,\n    sender_phone:        meta.senderPhone,\n    status:              'extracted',\n    extractedAt:         new Date().toISOString()\n  }});\n}\n\nreturn results;"
+      },
+      "id": "node-extract-001",
+      "name": "📧📱 Extract Emails + Phone Numbers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-6240, 400]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// DEDUP + FILTER — Remove duplicates, apply contact filters\n// ============================================================\nconst all     = $input.all();\nconst seenIds = new Set();\nconst seenEmails = new Set();\nconst seenPhones = new Set();\nconst output  = [];\n\nconst cfg = all[0]?.json;\nconst onlyWithPhone = cfg?.onlyWithPhone || false;\nconst onlyWithEmail = cfg?.onlyWithEmail || false;\nconst maxContacts   = cfg?.maxContacts   || 30;\n\nfor (const item of all) {\n  const j = item.json;\n  if (j.error || !j.has_contact) continue;\n\n  // Filter by contact type requirements\n  if (onlyWithPhone && !j.has_phone) continue;\n  if (onlyWithEmail && !j.has_email) continue;\n\n  // Dedup by job_id\n  const key = j.job_id || j.job_url;\n  if (seenIds.has(key)) continue;\n  seenIds.add(key);\n\n  // Dedup emails globally\n  const uniqueEmails = (j.emails || []).filter(e => {\n    if (seenEmails.has(e)) return false;\n    seenEmails.add(e); return true;\n  });\n\n  // Dedup phones globally\n  const uniquePhones = (j.whatsapp_phones || []).filter(p => {\n    if (seenPhones.has(p)) return false;\n    seenPhones.add(p); return true;\n  });\n\n  if (uniqueEmails.length === 0 && uniquePhones.length === 0) continue;\n\n  output.push({ json: {\n    ...j,\n    emails:          uniqueEmails,\n    whatsapp_phones: uniquePhones,\n    best_email:      uniqueEmails[0]  || null,\n    best_phone:      uniquePhones[0]  || null,\n    has_email:       uniqueEmails.length > 0,\n    has_phone:       uniquePhones.length > 0\n  }});\n\n  if (output.length >= maxContacts) break;\n}\n\nconsole.log(`Final contacts: ${output.length} (emails: ${seenEmails.size}, phones: ${seenPhones.size})`);\nreturn output.length > 0 ? output : [{ json: { message: 'No contacts found', hint: 'Try broader keywords or different platforms' } }];"
+      },
+      "id": "node-dedup-001",
+      "name": "🔀 Dedup + Filter Contacts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-6000, 400]
+    },
+
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue":  "={{ $json.has_email }}",
+                    "rightValue": true,
+                    "operator":   { "type": "boolean", "operation": "true" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HasEmail"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue":  "={{ $json.has_phone }}",
+                    "rightValue": true,
+                    "operator":   { "type": "boolean", "operation": "true" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HasPhone"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true,
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "node-router-001",
+      "name": "⇀ Route — Email vs WhatsApp vs Both",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [-5760, 400]
+    },
+
+    {
+      "parameters": {
+        "sendTo": "={{ $json.best_email }}",
+        "subject": "={{ $json.personalized_subject }}",
+        "emailType": "text",
+        "message":   "={{ $json.personalized_email }}",
+        "options": {
+          "replyTo":    "={{ $json.sender_email }}",
+          "appendAttribution": false
+        }
+      },
+      "id": "node-gmail-001",
+      "name": "📨 Send Email via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-5520, 260],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      },
+      "continueOnFail": true
+    },
+
+    {
+      "parameters": {
+        "url": "https://api.whatsapp.com/send",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $json.best_phone }}" },
+            { "name": "text",  "value": "={{ $json.personalized_whatsapp }}" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "node-whatsapp-web-001",
+      "name": "💬 WhatsApp — wa.me Link (No API Key)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-5520, 460],
+      "continueOnFail": true,
+      "notes": "Option A: Opens WhatsApp Web link. Use the Twilio node below for fully automated sending."
+    },
+
+    {
+      "parameters": {
+        "resource":  "message",
+        "operation": "create",
+        "from":      "whatsapp:+14155238886",
+        "to":        "=whatsapp:+{{ $json.best_phone }}",
+        "body":      "={{ $json.personalized_whatsapp }}"
+      },
+      "id": "node-twilio-001",
+      "name": "📲 WhatsApp via Twilio (Fully Automated)",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [-5520, 620],
+      "credentials": {
+        "twilioApi": {
+          "id": "REPLACE_WITH_YOUR_TWILIO_CREDENTIAL_ID",
+          "name": "Twilio account"
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Option B: Fully automated WhatsApp via Twilio Sandbox. Requires Twilio account + WhatsApp Sandbox setup."
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// LOG OUTREACH RESULTS\n// ============================================================\nconst results = [];\nfor (const item of $input.all()) {\n  const j = item.json;\n  const httpCode = j.statusCode || j.status || 200;\n  const success  = httpCode >= 200 && httpCode < 300;\n\n  results.push({ json: {\n    job_id:    j.job_id,\n    title:     j.title,\n    company:   j.company,\n    platform:  j.platform,\n    job_url:   j.job_url,\n    email_sent_to:   j.best_email || null,\n    whatsapp_sent_to:j.best_phone || null,\n    channel:   j.best_email ? (j.best_phone ? 'email+whatsapp' : 'email') : 'whatsapp',\n    status:    success ? 'sent' : 'failed',\n    http_code: httpCode,\n    error:     success ? null : (j.message || j.error || 'Error'),\n    sentAt:    new Date().toISOString()\n  }});\n}\nreturn results;"
+      },
+      "id": "node-log-001",
+      "name": "📊 Log Outreach Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-5280, 400]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FINAL SUMMARY REPORT\n// ============================================================\nconst all = $input.all();\nconst sent    = all.filter(i => i.json.status === 'sent');\nconst failed  = all.filter(i => i.json.status === 'failed');\nconst emailSent = sent.filter(i => i.json.email_sent_to);\nconst waSent    = sent.filter(i => i.json.whatsapp_sent_to);\n\nconst byPlatform = {};\nfor (const i of sent) {\n  const p = i.json.platform || 'unknown';\n  byPlatform[p] = (byPlatform[p] || 0) + 1;\n}\n\nconst report = {\n  summary: {\n    total_contacted:    sent.length,\n    emails_sent:        emailSent.length,\n    whatsapp_sent:      waSent.length,\n    failed:             failed.length,\n    by_platform:        byPlatform\n  },\n  contacted_jobs: sent.map(i => ({\n    title:     i.json.title,\n    company:   i.json.company,\n    platform:  i.json.platform,\n    channel:   i.json.channel,\n    email:     i.json.email_sent_to,\n    phone:     i.json.whatsapp_sent_to,\n    job_url:   i.json.job_url\n  })),\n  failed_jobs: failed.map(i => ({\n    title:   i.json.title,\n    company: i.json.company,\n    error:   i.json.error\n  })),\n  run_at: new Date().toISOString()\n};\n\nconsole.log(`\\n✅ SUMMARY\\n  Emails sent:   ${emailSent.length}\\n  WhatsApp sent: ${waSent.length}\\n  Failed:        ${failed.length}`);\nreturn [{ json: report }];"
+      },
+      "id": "node-summary-001",
+      "name": "📈 Final Summary Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-5040, 400]
+    }
+
+  ],
+
+  "connections": {
+    "▶ Manual Trigger": {
+      "main": [[{ "node": "⚙️ Config — Keywords, Templates, Limits", "type": "main", "index": 0 }]]
+    },
+    "⏰ Schedule Trigger (Every 12h)": {
+      "main": [[{ "node": "⚙️ Config — Keywords, Templates, Limits", "type": "main", "index": 0 }]]
+    },
+    "⚙️ Config — Keywords, Templates, Limits": {
+      "main": [[{ "node": "📋 Generate Scrape Tasks (All Platforms)", "type": "main", "index": 0 }]]
+    },
+    "📋 Generate Scrape Tasks (All Platforms)": {
+      "main": [[{ "node": "🔗 Build Scrape URL Per Platform", "type": "main", "index": 0 }]]
+    },
+    "🔗 Build Scrape URL Per Platform": {
+      "main": [[{ "node": "🌐 HTTP — Scrape Job Listing Page", "type": "main", "index": 0 }]]
+    },
+    "🌐 HTTP — Scrape Job Listing Page": {
+      "main": [[{ "node": "📋 Parse Job Cards (LinkedIn + Indeed + Naukri)", "type": "main", "index": 0 }]]
+    },
+    "📋 Parse Job Cards (LinkedIn + Indeed + Naukri)": {
+      "main": [[{ "node": "⫿ Split In Batches (5 jobs)", "type": "main", "index": 0 }]]
+    },
+    "⫿ Split In Batches (5 jobs)": {
+      "main": [[{ "node": "⏱ Rate Limit Delay (1.5s)", "type": "main", "index": 0 }]]
+    },
+    "⏱ Rate Limit Delay (1.5s)": {
+      "main": [[{ "node": "🔎 HTTP — Fetch Full Job Detail Page", "type": "main", "index": 0 }]]
+    },
+    "🔎 HTTP — Fetch Full Job Detail Page": {
+      "main": [[{ "node": "📧📱 Extract Emails + Phone Numbers", "type": "main", "index": 0 }]]
+    },
+    "📧📱 Extract Emails + Phone Numbers": {
+      "main": [[{ "node": "🔀 Dedup + Filter Contacts", "type": "main", "index": 0 }]]
+    },
+    "🔀 Dedup + Filter Contacts": {
+      "main": [[{ "node": "⇀ Route — Email vs WhatsApp vs Both", "type": "main", "index": 0 }]]
+    },
+    "⇀ Route — Email vs WhatsApp vs Both": {
+      "main": [
+        [{ "node": "📨 Send Email via Gmail",                    "type": "main", "index": 0 }],
+        [{ "node": "📲 WhatsApp via Twilio (Fully Automated)",   "type": "main", "index": 0 }]
+      ]
+    },
+    "📨 Send Email via Gmail": {
+      "main": [[{ "node": "📊 Log Outreach Results", "type": "main", "index": 0 }]]
+    },
+    "💬 WhatsApp — wa.me Link (No API Key)": {
+      "main": [[{ "node": "📊 Log Outreach Results", "type": "main", "index": 0 }]]
+    },
+    "📲 WhatsApp via Twilio (Fully Automated)": {
+      "main": [[{ "node": "📊 Log Outreach Results", "type": "main", "index": 0 }]]
+    },
+    "📊 Log Outreach Results": {
+      "main": [[{ "node": "📈 Final Summary Report", "type": "main", "index": 0 }]]
+    }
+  },
+
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "instanceId": "jobs-scrape-outreach-v1",
+    "templateId": "jobs-scrape-email-whatsapp"
+  },
+  "tags": [
+    { "name": "scraping" },
+    { "name": "outreach" },
+    { "name": "email" },
+    { "name": "whatsapp" },
+    { "name": "linkedin" },
+    { "name": "indeed" },
+    { "name": "naukri" }
+  ]
+}

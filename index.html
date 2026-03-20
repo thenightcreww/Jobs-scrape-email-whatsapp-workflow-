@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jobs Scraper → Email + WhatsApp Outreach</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:     #05070c;
+  --s1:     #090c14;
+  --s2:     #0d1120;
+  --bdr:    #151c2e;
+  --bdr2:   #1d2640;
+  --lime:   #a3e635;
+  --teal:   #2dd4bf;
+  --blue:   #60a5fa;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --pink:   #f472b6;
+  --red:    #f87171;
+  --gold:   #fbbf24;
+  --txt:    #cbd5e1;
+  --muted:  #3d4f6e;
+  --F:      'Familjen Grotesk', sans-serif;
+  --M:      'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:var(--F);overflow-x:hidden;}
+
+/* ── HERO ─── */
+.hero{
+  padding:56px 64px 48px;
+  border-bottom:1px solid var(--bdr);
+  position:relative;overflow:hidden;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(163,230,53,.04) 0%, transparent 60%),
+             linear-gradient(180deg,#05070c,#080b14);
+}
+.hero::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background-image:
+    linear-gradient(rgba(163,230,53,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(163,230,53,.03) 1px, transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;
+}
+.version{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(163,230,53,.08);border:1px solid rgba(163,230,53,.2);
+  border-radius:3px;padding:4px 12px;
+  font-family:var(--M);font-size:10px;color:var(--lime);
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px;
+}
+.version::before{content:'●';font-size:7px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+h1{
+  font-size:clamp(32px,5vw,62px);font-weight:700;
+  letter-spacing:-.03em;line-height:1;color:#fff;
+  position:relative;z-index:1;
+}
+h1 .hi{color:var(--lime);}
+h1 .lo{color:var(--teal);}
+.tagline{margin-top:14px;font-size:15px;color:var(--muted);max-width:600px;line-height:1.6;position:relative;z-index:1;}
+
+.kpi-row{display:flex;gap:0;margin-top:40px;position:relative;z-index:1;flex-wrap:wrap;}
+.kpi{
+  padding:16px 32px;border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;gap:4px;
+}
+.kpi:first-child{padding-left:0;}
+.kpi:last-child{border-right:none;}
+.kv{font-family:var(--M);font-size:26px;font-weight:500;color:var(--lime);}
+.kl{font-size:11px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;}
+
+/* ── WRAP ─── */
+.W{max-width:1340px;margin:0 auto;padding:0 48px 100px;}
+.sec{margin-top:64px;}
+.sh{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:28px;display:flex;align-items:center;gap:14px;
+}
+.sh::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+/* ── PLATFORM BADGES ─── */
+.platform-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+.pbadge{
+  display:flex;align-items:center;gap:10px;
+  background:var(--s1);border:1px solid var(--bdr);border-radius:10px;
+  padding:14px 20px;flex:1;min-width:200px;
+}
+.pbadge-icon{font-size:24px;}
+.pbadge-info h3{font-size:13px;font-weight:600;margin-bottom:2px;}
+.pbadge-info p{font-size:11px;color:var(--muted);}
+
+/* ── FLOW ─── */
+.flow-wrap{
+  background:var(--s1);border:1px solid var(--bdr);border-radius:14px;
+  padding:32px 24px;overflow-x:auto;
+}
+.flow{display:flex;align-items:flex-start;gap:0;min-width:1200px;}
+.fn{display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0;}
+.fb{
+  width:96px;padding:11px 7px 9px;border-radius:9px;border:1.5px solid;
+  text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s;
+}
+.fb:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.6);}
+.fb .fi{font-size:18px;margin-bottom:3px;}
+.fb .ft{font-size:9px;font-weight:600;line-height:1.35;letter-spacing:.02em;}
+.fl{font-family:var(--M);font-size:8px;color:var(--muted);text-align:center;width:96px;line-height:1.4;margin-top:2px;}
+.fa{width:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--bdr2);font-size:14px;margin-top:-16px;}
+
+.t-go{border-color:#a3e635;background:rgba(163,230,53,.07);color:#a3e635;}
+.t-sc{border-color:#2dd4bf;background:rgba(45,212,191,.07);color:#2dd4bf;}
+.t-cf{border-color:#60a5fa;background:rgba(96,165,250,.07);color:#60a5fa;}
+.t-cd{border-color:#fbbf24;background:rgba(251,191,36,.07);color:#fbbf24;}
+.t-bt{border-color:#f472b6;background:rgba(244,114,182,.07);color:#f472b6;}
+.t-rt{border-color:#f87171;background:rgba(248,113,113,.07);color:#f87171;}
+.t-out{border-color:#a78bfa;background:rgba(167,139,250,.07);color:#a78bfa;}
+
+/* branch */
+.branch-block{display:flex;flex-direction:column;gap:8px;}
+.branch-item{display:flex;align-items:center;gap:4px;font-family:var(--M);font-size:8px;color:var(--muted);}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* ── NODE CARDS ─── */
+.nc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(620px,1fr));gap:16px;}
+.nc{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;transition:border-color .2s;}
+.nc:hover{border-color:var(--bdr2);}
+.nc-h{
+  display:flex;align-items:center;gap:13px;padding:15px 20px;
+  cursor:pointer;user-select:none;
+}
+.nc-h:hover{background:rgba(255,255,255,.015);}
+.nn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--M);font-size:10px;font-weight:500;flex-shrink:0;}
+.nt{flex:1;font-size:13px;font-weight:600;}
+.ntag{font-family:var(--M);font-size:9px;padding:3px 8px;border-radius:3px;letter-spacing:.05em;flex-shrink:0;}
+.nch{color:var(--muted);font-size:10px;transition:transform .2s;flex-shrink:0;}
+.nc-b{padding:20px;display:none;border-top:1px solid var(--bdr);}
+.nc-b.open{display:block;}
+
+/* code */
+.cb{
+  background:#030508;border:1px solid var(--bdr);border-radius:8px;
+  padding:15px;font-family:var(--M);font-size:11px;line-height:1.8;
+  color:#6b80a0;overflow-x:auto;white-space:pre;max-height:400px;overflow-y:auto;position:relative;
+}
+.cb .kw{color:#a78bfa;} .cb .s{color:#a3e635;} .cb .c{color:#1f2d45;font-style:italic;}
+.cb .n{color:#fbbf24;} .cb .fn{color:#2dd4bf;} .cb .rx{color:#fb923c;}
+
+.cpb{
+  position:absolute;top:8px;right:8px;background:var(--s2);border:1px solid var(--bdr);
+  border-radius:4px;padding:3px 9px;font-family:var(--M);font-size:9px;color:var(--muted);
+  cursor:pointer;transition:color .15s,border-color .15s;
+}
+.cpb:hover{color:var(--lime);border-color:var(--lime);}
+
+/* table */
+.t{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0 14px;}
+.t th{text-align:left;padding:7px 11px;font-family:var(--M);font-size:9px;
+  letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--bdr);background:var(--s2);}
+.t td{padding:9px 11px;border-bottom:1px solid rgba(21,28,46,.6);vertical-align:top;}
+.t tr:last-child td{border-bottom:none;}
+.tk{color:#c4b5fd;font-family:var(--M);font-size:10px;}
+.tv{color:#2dd4bf;font-family:var(--M);font-size:10px;word-break:break-all;}
+.td{color:var(--muted);font-size:11px;}
+
+/* callout */
+.cl{border-left:3px solid;padding:11px 15px;border-radius:0 7px 7px 0;margin:10px 0;font-size:12.5px;line-height:1.6;}
+.cw{border-color:var(--gold);background:rgba(251,191,36,.06);color:#fcd34d;}
+.ci{border-color:var(--teal);background:rgba(45,212,191,.06);color:#5eead4;}
+.cs{border-color:var(--lime);background:rgba(163,230,53,.06);color:#bef264;}
+.cr{border-color:var(--red);background:rgba(248,113,113,.06);color:#fca5a5;}
+.cp{border-color:var(--purple);background:rgba(167,139,250,.06);color:#c4b5fd;}
+
+/* pill */
+.pl{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:3px;font-family:var(--M);font-size:9px;font-weight:500;letter-spacing:.04em;}
+.pl-g{background:rgba(163,230,53,.12);color:#a3e635;}
+.pl-t{background:rgba(45,212,191,.12);color:#2dd4bf;}
+.pl-b{background:rgba(96,165,250,.12);color:#60a5fa;}
+.pl-p{background:rgba(167,139,250,.12);color:#a78bfa;}
+.pl-o{background:rgba(251,159,67,.12);color:#fb923c;}
+.pl-r{background:rgba(248,113,113,.12);color:#f87171;}
+
+/* output schema */
+.schema{
+  background:#030508;border:1px solid var(--bdr);border-radius:10px;
+  padding:20px;font-family:var(--M);font-size:11.5px;line-height:2;color:#3d5068;
+}
+.sk{color:#a78bfa;} .ss{color:#a3e635;} .sn{color:#fbbf24;} .sb{color:#1d2640;} .st{color:#2dd4bf;}
+
+/* setup steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.step{
+  background:var(--s1);border:1px solid var(--bdr);border-radius:10px;
+  padding:20px;display:flex;flex-direction:column;gap:10px;
+}
+.step-num{
+  width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--M);font-size:12px;font-weight:500;flex-shrink:0;
+  background:rgba(163,230,53,.1);color:var(--lime);
+}
+.step h3{font-size:13px;font-weight:600;}
+.step p{font-size:12px;color:var(--muted);line-height:1.6;}
+code{background:#0d1120;border:1px solid var(--bdr);border-radius:3px;padding:1px 5px;font-family:var(--M);font-size:10px;}
+
+/* comparison */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cmp-card{background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:20px;}
+.cmp-card h3{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.cmp-card ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.cmp-card li{font-size:12px;color:var(--muted);padding-left:18px;position:relative;line-height:1.5;}
+.cmp-card li::before{position:absolute;left:0;}
+.c-bad li::before{content:'✗';color:var(--red);}
+.c-good li::before{content:'✓';color:var(--lime);}
+.c-bad h3{color:var(--red);}
+.c-good h3{color:var(--lime);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div style="max-width:1340px;margin:0 auto;padding:0 16px">
+    <div class="version">⚡ n8n workflow · v2.0 · production ready</div>
+    <h1>Jobs Scraper<br><span class="hi">Email</span> + <span class="lo">WhatsApp</span></h1>
+    <p class="tagline">Scrapes hiring emails &amp; phone numbers from LinkedIn, Indeed, and Naukri job listings — then fires personalized outreach automatically via Gmail + Twilio WhatsApp.</p>
+    <div class="kpi-row">
+      <div class="kpi"><span class="kv">3</span><span class="kl">Platforms</span></div>
+      <div class="kpi"><span class="kv">16</span><span class="kl">Nodes</span></div>
+      <div class="kpi"><span class="kv">150+</span><span class="kl">Jobs / Run</span></div>
+      <div class="kpi"><span class="kv">2</span><span class="kl">Channels</span></div>
+      <div class="kpi"><span class="kv">30</span><span class="kl">Max Outreach Cap</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="W">
+
+  <!-- PLATFORMS -->
+  <div class="sec">
+    <div class="sh">Platforms Scraped</div>
+    <div class="platform-row">
+      <div class="pbadge">
+        <div class="pbadge-icon">💼</div>
+        <div class="pbadge-info">
+          <h3 style="color:#60a5fa">LinkedIn</h3>
+          <p>Guest jobs API · 3 pages × 25 = 75 jobs · Easy Apply detection</p>
+        </div>
+      </div>
+      <div class="pbadge">
+        <div class="pbadge-icon">🔍</div>
+        <div class="pbadge-info">
+          <h3 style="color:#fbbf24">Indeed</h3>
+          <p>Search HTML · 3 pages × 15 = 45 jobs · data-jk job keys</p>
+        </div>
+      </div>
+      <div class="pbadge">
+        <div class="pbadge-icon">🇮🇳</div>
+        <div class="pbadge-info">
+          <h3 style="color:#fb923c">Naukri</h3>
+          <p>JSON-LD data · 3 pages × 20 = 60 jobs · Indian phone extraction</p>
+        </div>
+      </div>
+      <div class="pbadge">
+        <div class="pbadge-icon">📧</div>
+        <div class="pbadge-info">
+          <h3 style="color:#a3e635">Gmail</h3>
+          <p>OAuth2 · Personalized templates · Per-company subject lines</p>
+        </div>
+      </div>
+      <div class="pbadge">
+        <div class="pbadge-icon">💬</div>
+        <div class="pbadge-info">
+          <h3 style="color:#2dd4bf">Twilio WhatsApp</h3>
+          <p>Fully automated · Sandbox or production · Indian numbers +91</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW DIAGRAM -->
+  <div class="sec">
+    <div class="sh">Complete Pipeline Flow (16 Nodes)</div>
+    <div class="flow-wrap">
+      <div class="flow">
+
+        <div class="fn">
+          <div class="fb t-go" onclick="op('n1')"><div class="fi">▶</div><div class="ft">Trigger<br>(Manual/Sched)</div></div>
+          <div class="fl">Start or<br>every 12h</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n2')"><div class="fi">⚙</div><div class="ft">Config<br>Settings</div></div>
+          <div class="fl">Keywords +<br>templates</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n3')"><div class="fi">📋</div><div class="ft">Gen Scrape<br>Tasks</div></div>
+          <div class="fl">LI + Indeed<br>+ Naukri</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n4')"><div class="fi">🔗</div><div class="ft">Build<br>URLs</div></div>
+          <div class="fl">Per-platform<br>URL logic</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cf" onclick="op('n5')"><div class="fi">🌐</div><div class="ft">HTTP<br>Scrape</div></div>
+          <div class="fl">Retry 3×<br>full headers</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n6')"><div class="fi">{ }</div><div class="ft">Parse<br>Cards</div></div>
+          <div class="fl">All 3<br>platforms</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-bt" onclick="op('n7')"><div class="fi">⫿</div><div class="ft">Split<br>Batches</div></div>
+          <div class="fl">5 jobs<br>at a time</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n8')"><div class="fi">⏱</div><div class="ft">Rate<br>Limit</div></div>
+          <div class="fl">1.5s delay<br>anti-block</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cf" onclick="op('n9')"><div class="fi">🔎</div><div class="ft">HTTP<br>Detail</div></div>
+          <div class="fl">Full job<br>page HTML</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n10')"><div class="fi">📧📱</div><div class="ft">Extract<br>Email+Phone</div></div>
+          <div class="fl">Regex +<br>score</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-cd" onclick="op('n11')"><div class="fi">🔀</div><div class="ft">Dedup +<br>Filter</div></div>
+          <div class="fl">Global<br>dedup</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-rt" onclick="op('n12')"><div class="fi">⇀</div><div class="ft">Route<br>Channel</div></div>
+          <div class="fl">Email vs<br>WhatsApp</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="fb t-out" style="margin-bottom:0" onclick="op('n13')"><div class="fi">📨</div><div class="ft">Send<br>Gmail</div></div>
+            <div class="branch-item"><div class="bdot" style="background:#60a5fa"></div><span style="color:#60a5fa">email output</span></div>
+            <div class="fb t-out" onclick="op('n14')"><div class="fi">📲</div><div class="ft">WhatsApp<br>Twilio</div></div>
+            <div class="branch-item"><div class="bdot" style="background:#a78bfa"></div><span style="color:#a78bfa">phone output</span></div>
+          </div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-go" onclick="op('n15')"><div class="fi">📊</div><div class="ft">Log<br>Results</div></div>
+          <div class="fl">Per-job<br>status</div>
+        </div><div class="fa">→</div>
+
+        <div class="fn">
+          <div class="fb t-go" onclick="op('n16')"><div class="fi">📈</div><div class="ft">Summary<br>Report</div></div>
+          <div class="fl">Final<br>stats</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- NODE CARDS -->
+  <div class="sec">
+    <div class="sh">Node Configurations</div>
+    <div class="nc-grid">
+
+      <!-- CONFIG NODE -->
+      <div class="nc" id="nc-n2">
+        <div class="nc-h" onclick="tog('n2')">
+          <div class="nn" style="background:rgba(251,191,36,.15);color:#fbbf24">01</div>
+          <div class="nt">⚙️ Config — Keywords, Templates, Limits</div>
+          <span class="ntag" style="background:rgba(251,191,36,.1);color:#fbbf24">CODE</span>
+          <span class="nch" id="ch-n2">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n2">
+          <div class="cl cs">This is the ONLY node you edit. Set your keywords, location, message templates, and sender info here. Everything else runs automatically.</div>
+          <div class="cb"><button class="cpb" onclick="cp(this)">COPY</button><span class="kw">const</span> config = {
+  keywords:  <span class="s">"AI Automation Engineer"</span>,  <span class="c">// ← your job title</span>
+  location:  <span class="s">"India"</span>,
+  linkedInPages: <span class="n">3</span>,   <span class="c">// × 25 jobs</span>
+  indeedPages:   <span class="n">3</span>,   <span class="c">// × 15 jobs</span>
+  naukriPages:   <span class="n">3</span>,   <span class="c">// × 20 jobs</span>
+
+  senderName:    <span class="s">"Manpreet Singh"</span>,
+  senderEmail:   <span class="s">"manpreet@gmail.com"</span>,
+  senderPhone:   <span class="s">"919876543210"</span>,  <span class="c">// with country code</span>
+  resumeUrl:     <span class="s">"https://yoursite.com/resume.pdf"</span>,
+
+  maxContactsPerRun: <span class="n">30</span>,
+  coverLetterTone:   <span class="s">"professional"</span>,
+
+  emailSubject:  <span class="s">"Application for {title} at {company}"</span>,
+  emailBody:     <span class="s">`Hi {hiringManager},
+I came across the {title} opening at {company}...`</span>,
+  whatsappMsg:   <span class="s">`Hello! 👋 I saw the *{title}* at *{company}*...`</span>
+};</div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <span class="pl pl-g">{title}</span>
+            <span class="pl pl-t">{company}</span>
+            <span class="pl pl-b">{hiringManager}</span>
+            <span class="pl pl-o">{resumeUrl}</span>
+            <span class="pl pl-p">{senderName}</span>
+            <span class="pl pl-r">{senderEmail}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HTTP SCRAPE -->
+      <div class="nc" id="nc-n5">
+        <div class="nc-h" onclick="tog('n5')">
+          <div class="nn" style="background:rgba(96,165,250,.12);color:#60a5fa">04</div>
+          <div class="nt">🌐 HTTP — Scrape Job Listing Page</div>
+          <span class="ntag" style="background:rgba(96,165,250,.1);color:#60a5fa">HTTP REQUEST</span>
+          <span class="nch" id="ch-n5">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n5">
+          <div class="cl cw">All 3 platforms use this single node. The URL is dynamically built by the URL Builder node before this.</div>
+          <table class="t">
+            <tr><th>Setting</th><th>Value</th></tr>
+            <tr><td class="tk">URL</td><td class="tv">={{ $json.scrapeUrl }}</td></tr>
+            <tr><td class="tk">Response Format</td><td class="tv">text</td></tr>
+            <tr><td class="tk">Retry On Fail</td><td class="tv">✓ 3×, 2500ms wait</td></tr>
+            <tr><td class="tk">Continue On Fail</td><td class="tv">✓ enabled</td></tr>
+            <tr><td class="tk">Timeout</td><td class="tv">35000ms</td></tr>
+          </table>
+          <table class="t">
+            <tr><th>Header</th><th>Value</th></tr>
+            <tr><td class="tk">User-Agent</td><td class="tv">Mozilla/5.0 Chrome/122 Windows NT 10.0</td></tr>
+            <tr><td class="tk">Accept</td><td class="tv">text/html,application/xhtml+xml,*/*;q=0.8</td></tr>
+            <tr><td class="tk">Accept-Language</td><td class="tv">en-IN,en-US;q=0.9,en;q=0.8</td></tr>
+            <tr><td class="tk">Referer</td><td class="tv">https://www.google.com/</td></tr>
+            <tr><td class="tk">sec-fetch-mode</td><td class="tv">navigate</td></tr>
+            <tr><td class="tk">sec-fetch-site</td><td class="tv">none</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- PARSE -->
+      <div class="nc" id="nc-n6">
+        <div class="nc-h" onclick="tog('n6')">
+          <div class="nn" style="background:rgba(251,191,36,.15);color:#fbbf24">05</div>
+          <div class="nt">📋 Parse Job Cards (LinkedIn + Indeed + Naukri)</div>
+          <span class="ntag" style="background:rgba(251,191,36,.1);color:#fbbf24">CODE</span>
+          <span class="nch" id="ch-n6">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n6">
+          <div class="cl ci">Three separate parsing strategies inside one node. Platform is detected from <code>$json.platform</code> set by the URL builder.</div>
+          <table class="t">
+            <tr><th>Platform</th><th>Job ID Pattern</th><th>Title Pattern</th></tr>
+            <tr><td class="tk">LinkedIn</td><td class="tv">data-entity-urn="urn:li:jobPosting:(\d+)"</td><td class="tv">span.title innerText</td></tr>
+            <tr><td class="tk">Indeed</td><td class="tv">data-jk="([a-z0-9]+)"</td><td class="tv">class="jobTitle" span/a</td></tr>
+            <tr><td class="tk">Naukri</td><td class="tv">"jobId":"([^"]+)" JSON-LD</td><td class="tv">"title":"([^"]+)"</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- EXTRACT -->
+      <div class="nc" id="nc-n10">
+        <div class="nc-h" onclick="tog('n10')">
+          <div class="nn" style="background:rgba(251,191,36,.15);color:#fbbf24">09</div>
+          <div class="nt">📧📱 Extract Emails + Phone Numbers</div>
+          <span class="ntag" style="background:rgba(251,191,36,.1);color:#fbbf24">CODE</span>
+          <span class="nch" id="ch-n10">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n10">
+          <div class="cl cs">The core extraction engine. Runs on every job detail page from all 3 platforms. Scores emails by business vs personal domain and hiring-pattern prefixes.</div>
+          <div class="cb"><button class="cpb" onclick="cp(this)">COPY</button><span class="c">// Email regex</span>
+<span class="rx">/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,7}/g</span>
+
+<span class="c">// Indian phone regex (also captures intl)</span>
+<span class="rx">/(?:\+91[\-\s]?|0)?[6-9]\d{9}|(?:\+\d{1,3}[\-\s]?)?\d{8,15}/g</span>
+
+<span class="c">// Format for WhatsApp (+91XXXXXXXXXX)</span>
+<span class="kw">if</span> (phone.length === <span class="n">10</span> && <span class="rx">/^[6-9]/</span>.<span class="fn">test</span>(phone))
+  whatsapp = <span class="s">`91${phone}`</span>;
+
+<span class="c">// Scoring: business domain +20, name pattern +20, in JD +10</span>
+<span class="c">// HR/hiring prefix +15, caps at 100</span></div>
+          <div style="margin-top:14px">
+            <p style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Blocked Domains (auto-filtered)</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="pl pl-r">linkedin.com</span>
+              <span class="pl pl-r">indeed.com</span>
+              <span class="pl pl-r">naukri.com</span>
+              <span class="pl pl-r">google.com</span>
+              <span class="pl pl-r">schema.org</span>
+              <span class="pl pl-r">sentry.io</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GMAIL -->
+      <div class="nc" id="nc-n13">
+        <div class="nc-h" onclick="tog('n13')">
+          <div class="nn" style="background:rgba(96,165,250,.12);color:#60a5fa">12</div>
+          <div class="nt">📨 Send Email via Gmail</div>
+          <span class="ntag" style="background:rgba(96,165,250,.1);color:#60a5fa">GMAIL NODE</span>
+          <span class="nch" id="ch-n13">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n13">
+          <div class="cl cs">Uses n8n's native Gmail node. Requires Gmail OAuth2 credential. Subject and body are pre-populated from the Config node templates.</div>
+          <table class="t">
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td class="tk">To</td><td class="tv">={{ $json.best_email }}</td></tr>
+            <tr><td class="tk">Subject</td><td class="tv">={{ $json.personalized_subject }}</td></tr>
+            <tr><td class="tk">Body</td><td class="tv">={{ $json.personalized_email }}</td></tr>
+            <tr><td class="tk">Reply-To</td><td class="tv">={{ $json.sender_email }}</td></tr>
+            <tr><td class="tk">Credential Type</td><td class="tv">gmailOAuth2</td></tr>
+            <tr><td class="tk">Continue On Fail</td><td class="tv">✓ enabled</td></tr>
+          </table>
+          <div class="cl cw">Add credential: Settings → Credentials → Gmail OAuth2 → Connect your Google account. Then select it in this node.</div>
+        </div>
+      </div>
+
+      <!-- TWILIO WHATSAPP -->
+      <div class="nc" id="nc-n14">
+        <div class="nc-h" onclick="tog('n14')">
+          <div class="nn" style="background:rgba(167,139,250,.15);color:#a78bfa">13</div>
+          <div class="nt">📲 WhatsApp via Twilio (Fully Automated)</div>
+          <span class="ntag" style="background:rgba(167,139,250,.1);color:#a78bfa">TWILIO NODE</span>
+          <span class="nch" id="ch-n14">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n14">
+          <div class="cl cp">Two WhatsApp options are included in the workflow. Use Twilio for full automation. Use the wa.me HTTP node for manual/semi-automated flow.</div>
+          <table class="t">
+            <tr><th>Option</th><th>Node</th><th>Setup</th></tr>
+            <tr><td class="tk">Fully Auto</td><td class="tv">Twilio node</td><td class="td">Twilio account + WhatsApp Sandbox ($0.005/msg)</td></tr>
+            <tr><td class="tk">Semi-Auto</td><td class="tv">HTTP wa.me link</td><td class="td">No API — generates link, opens WhatsApp Web</td></tr>
+          </table>
+          <table class="t">
+            <tr><th>Twilio Field</th><th>Value</th></tr>
+            <tr><td class="tk">From</td><td class="tv">whatsapp:+14155238886 (Sandbox)</td></tr>
+            <tr><td class="tk">To</td><td class="tv">=whatsapp:+{{ $json.best_phone }}</td></tr>
+            <tr><td class="tk">Body</td><td class="tv">={{ $json.personalized_whatsapp }}</td></tr>
+            <tr><td class="tk">Credential</td><td class="tv">twilioApi</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUMMARY OUTPUT -->
+      <div class="nc" id="nc-n16">
+        <div class="nc-h" onclick="tog('n16')">
+          <div class="nn" style="background:rgba(163,230,53,.12);color:#a3e635">15</div>
+          <div class="nt">📈 Final Summary Report</div>
+          <span class="ntag" style="background:rgba(163,230,53,.1);color:#a3e635">CODE</span>
+          <span class="nch" id="ch-n16">▼</span>
+        </div>
+        <div class="nc-b" id="nb-n16">
+          <div class="schema">{
+  <span class="sk">"summary"</span>: {
+    <span class="sk">"total_contacted"</span>:  <span class="sn">22</span>,
+    <span class="sk">"emails_sent"</span>:      <span class="sn">14</span>,
+    <span class="sk">"whatsapp_sent"</span>:    <span class="sn">11</span>,
+    <span class="sk">"failed"</span>:           <span class="sn">2</span>,
+    <span class="sk">"by_platform"</span>: {
+      <span class="sk">"linkedin"</span>:  <span class="sn">9</span>,
+      <span class="sk">"indeed"</span>:    <span class="sn">7</span>,
+      <span class="sk">"naukri"</span>:    <span class="sn">6</span>
+    }
+  },
+  <span class="sk">"contacted_jobs"</span>: <span class="sb">[</span>
+    {
+      <span class="sk">"title"</span>:    <span class="ss">"AI Automation Engineer"</span>,
+      <span class="sk">"company"</span>:  <span class="ss">"TechCorp India"</span>,
+      <span class="sk">"platform"</span>: <span class="ss">"naukri"</span>,
+      <span class="sk">"channel"</span>:  <span class="ss">"email+whatsapp"</span>,
+      <span class="sk">"email"</span>:    <span class="ss">"hr@techcorp.in"</span>,
+      <span class="sk">"phone"</span>:    <span class="ss">"919876543210"</span>
+    }
+  <span class="sb">]</span>,
+  <span class="sk">"run_at"</span>: <span class="ss">"2026-03-21T10:00:00.000Z"</span>
+}</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SETUP STEPS -->
+  <div class="sec">
+    <div class="sh">Setup Checklist (5 Steps)</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Import Workflow</h3>
+        <p>In n8n: <strong>Settings → Import Workflow</strong> → paste the JSON file. All 16 nodes will appear pre-wired.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Edit Config Node</h3>
+        <p>Open the <strong>⚙️ Config node</strong> and set your <code>keywords</code>, <code>location</code>, <code>senderName</code>, <code>senderEmail</code>, <code>resumeUrl</code>.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Connect Gmail</h3>
+        <p>Add Gmail OAuth2 credential in Settings → Credentials. Select it in the <strong>📨 Gmail node</strong>. Test with 1 send first.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Connect Twilio WhatsApp</h3>
+        <p>Create a Twilio account → enable WhatsApp Sandbox → add <code>twilioApi</code> credential in n8n. Update the "From" number if using production.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <h3>Test Run (1 job)</h3>
+        <p>Set <code>maxContactsPerRun: 1</code> and <code>linkedInPages: 1</code> to test. Check the Summary Report node output. Then scale up.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <h3>Schedule It</h3>
+        <p>Activate the <strong>⏰ Schedule Trigger</strong> (every 12h) for fully automated daily outreach. Disable Manual Trigger to avoid double runs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="sec">
+    <div class="sh">Important Notes</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px">
+      <div class="cl cw"><strong>403 / Blocked?</strong> Increase <code>delayMs</code> to 3000. Add a residential proxy in the HTTP node's proxy settings. Rotate User-Agent strings.</div>
+      <div class="cl ci"><strong>Naukri Parsing</strong> Naukri's HTML structure changes frequently. If jobs aren't parsing, inspect the HTML in a test run and update the regex patterns in Node 5.</div>
+      <div class="cl cs"><strong>WhatsApp Limits</strong> Twilio Sandbox: 1 message per verified number (dev). Production WhatsApp Business API: no limits. Move to production for scale.</div>
+      <div class="cl cr"><strong>Legal Note</strong> Only send to publicly listed hiring contact emails/phones. Do not scrape personal data. Comply with India's DPDP Act and CAN-SPAM for emails.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function tog(id){
+  const b=document.getElementById('nb-'+id),c=document.getElementById('ch-'+id);
+  if(!b)return;
+  const o=b.classList.contains('open');
+  b.classList.toggle('open',!o);
+  if(c)c.style.transform=o?'':'rotate(180deg)';
+}
+function op(id){
+  const b=document.getElementById('nb-'+id),c=document.getElementById('ch-'+id);
+  if(!b)return;
+  b.classList.add('open');
+  if(c)c.style.transform='rotate(180deg)';
+  const card=document.getElementById('nc-'+id);
+  if(card)setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function cp(btn){
+  const t=btn.parentElement.innerText.replace('COPY\n','').trim();
+  navigator.clipboard.writeText(t).then(()=>{
+    btn.textContent='COPIED!';btn.style.color='#a3e635';
+    setTimeout(()=>{btn.textContent='COPY';btn.style.color='';},1600);
+  });
+}
+['n2','n13','n14'].forEach(id=>tog(id));
+</script>
+</body>
+</html>
