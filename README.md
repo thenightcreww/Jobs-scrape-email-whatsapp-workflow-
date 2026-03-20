@@ -153,8 +153,8 @@ If you found this useful:
 Manpreet Singh
 Full Stack & AI Automation Developer
 
-📧 dimplebrar13@gmail.com
+📧 thenightcreww@hotmail.com
 
-🔗 https://github.com/manpreet1singh2
+🔗 https://thenightcrew.club
 
 🔥 Built for speed, automation, and real-world impact.
